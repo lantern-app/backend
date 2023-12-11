@@ -3,7 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import helmet from "helmet";
 import compression from "compression";
-import adhanRouter from "./routes/adhan.router";
+import prayerRouter from "./routes/prayer.router";
 
 dotenv.config();
 
@@ -17,7 +17,7 @@ app.get("/", (req, res) => {
   return res.json({ message: "Hello World!" });
 });
 
-app.use("/adhan", adhanRouter);
+app.use("/prayer", prayerRouter);
 
 const port = process.env.PORT || 5000;
 
