@@ -1,10 +1,10 @@
 import { Prayer } from "interfaces/prayer";
 
-export default (prayers: Prayer[]) => {
+export const parsePrayers = (prayers: Prayer[]) => {
   return prayers.map((prayer: Prayer) => {
     const {
       timings: { Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha },
-      date: { readable, gregorian },
+      date: { gregorian },
       meta: { timezone },
     } = prayer;
 
