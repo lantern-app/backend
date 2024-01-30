@@ -1,47 +1,42 @@
-import { Router } from "express";
-import { User as UserInterface } from "interfaces/user";
-import { UserValidation, User } from "models/user.model";
 import bcrypt from "bcrypt";
+import { Router } from "express";
+
+import { TUser } from "interfaces/user";
+import { validateDto } from "middleware/validateDto";
+import User from "models/user.model";
+import { loginSchema, registerSchema } from "validators/auth.validators";
 
 const router = Router();
 
-router.post("/register", async (req, res) => {
-    console.log(req.body);
-    const data = req.body as UserInterface;
-    const errors = UserValidation(data);
+router.post("/register", validateDto(registerSchema), async (req: Req<TUser>, res) => {
+  const data = req.body;
 
-    if (errors) return res.status(400).json(errors);
+  const user = await User.findOne({ where: { username: data.username } });
+  if (user) return res.status(400).json({ message: "Username already exists" });
 
-    const user = await User.findOne({ where: { username: data.username } });
-    if (user)
-        return res.status(400).json({ message: "username already exists" });
-
-    const newUser = await User.create({ ...data });
-    //@ts-ignore
-    return res.status(201).json({ token: newUser.token });
+  const newUser = await User.create({ ...data });
+  return res.status(201).json({ token: newUser.token, user: newUser });
 });
 
-router.post("/login", async (req, res) => {
-    const data = req.body as UserInterface;
+router.post("/login", validateDto(loginSchema), async (req: Req<TUser>, res) => {
+  const data = req.body;
 
-    const user = await User.findOne({ where: { username: data.username } });
-    if (!user) return res.status(400).json([{ message: "username not found" }]);
+  const user = await User.findOne({ where: { username: data.username } });
+  if (!user) return res.status(400).json({ message: "username not found" });
 
-    // @ts-ignore
-    const isMatch = await bcrypt.compare(data["password"], user.password);
-    if (!isMatch) {
-        return res.status(403).json({
-            code: 400,
-            message:
-                "Password is incorrect, please double check your information and try again.",
-        });
-    }
-
-    return res.status(200).json({
-        message: "User signed in",
-        //@ts-ignore
-        token: user.token,
+  const isMatch = await bcrypt.compare(data["password"], user.password);
+  if (!isMatch) {
+    return res.status(403).json({
+      code: 400,
+      message: "Password is incorrect, please double check your information and try again.",
     });
+  }
+
+  return res.status(200).json({
+    message: "User signed in",
+    token: user.token,
+    user,
+  });
 });
 
 export default router;
